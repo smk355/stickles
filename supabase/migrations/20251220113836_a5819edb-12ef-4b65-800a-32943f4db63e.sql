@@ -158,7 +158,7 @@ BEGIN
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name', 'User'),
         NEW.email,
         'customer',
-        'google'
+        'email'
     );
     RETURN NEW;
 END;

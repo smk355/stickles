@@ -162,19 +162,24 @@ export function Header() {
                     Sign Out
                   </Button>
                 </>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    navigate("/auth");
-                    setMobileMenuOpen(false);
-                  }}
-                  disabled={loading}
-                  className="w-fit"
-                >
-                  Sign In with Google
-                </Button>
-              )}
+               ) : (
+                <>
+                  {/*
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigate("/auth");
+                      setMobileMenuOpen(false);
+                    }}
+                    disabled={loading}
+                    className="w-fit"
+                  >
+                    Sign In with Google
+                  </Button>
+                  */}
+                </>
+                )
+              }
             </nav>
           </div>
         )}

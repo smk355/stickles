@@ -25,11 +25,11 @@ export default function Auth() {
       navigate("/");
     }
   }, [user, loading, navigate]);
-
+/*
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
   };
-
+*/
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -163,6 +163,7 @@ export default function Auth() {
             </form>
 
             {/* Divider */}
+            {/*
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border"></div>
@@ -171,8 +172,10 @@ export default function Auth() {
                 <span className="bg-card px-4 text-muted-foreground">or</span>
               </div>
             </div>
+            */}
 
             {/* Google Sign In */}
+            {/*
             <Button
               type="button"
               variant="outline"
@@ -201,6 +204,7 @@ export default function Auth() {
               </svg>
               Continue with Google
             </Button>
+            */}
 
             {/* Toggle Sign Up / Sign In */}
             <p className="text-center text-sm text-muted-foreground mt-6">
