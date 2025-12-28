@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,131 +7,80 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("=== Function invoked ===");
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
+    console.log("CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // -------------------------------
-    // AUTH HEADER
-    // -------------------------------
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing Authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // -------------------------------
-    // SUPABASE CLIENT
-    // -------------------------------
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return new Response(
-        JSON.stringify({ error: "Supabase env vars missing" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
-
-    // -------------------------------
-    // VERIFY USER
-    // -------------------------------
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // -------------------------------
-    // CHECK ADMIN ROLE
-    // -------------------------------
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== "admin") {
-      return new Response(
-        JSON.stringify({ error: "Forbidden: Admin only" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // -------------------------------
-    // PARSE BODY
-    // -------------------------------
+    console.log("Processing POST request");
+    
+    // Parse body
     const body = await req.json();
+    console.log("Body parsed, image present:", !!body.image);
+    console.log("Folder:", body.folder);
+    
     const image = body.image;
     const folder = body.folder || "products";
 
     if (!image || typeof image !== "string") {
+      console.error("Invalid image data");
       return new Response(
         JSON.stringify({ error: "Invalid or missing image (base64 expected)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // -------------------------------
-    // CLOUDINARY CONFIG
-    // -------------------------------
+    // Get Cloudinary config
     const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
-    const uploadPreset = Deno.env.get("CLOUDINARY_UPLOAD_PRESET") || "ml_default";
+    const uploadPreset = Deno.env.get("CLOUDINARY_UPLOAD_PRESET");
 
-    if (!cloudName) {
+    console.log("Cloud name:", cloudName);
+    console.log("Upload preset:", uploadPreset);
+
+    if (!cloudName || !uploadPreset) {
+      console.error("Cloudinary config missing");
       return new Response(
         JSON.stringify({ error: "Cloudinary not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // -------------------------------
-    // UPLOAD TO CLOUDINARY
-    // -------------------------------
+    // Upload to Cloudinary
+    console.log("Creating form data...");
     const formData = new FormData();
-    formData.append("file", image); // base64 WITH data:image/... prefix
+    formData.append("file", image);
     formData.append("upload_preset", uploadPreset);
     formData.append("folder", `products/${folder}`);
 
-    const cloudinaryResponse = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+    console.log("Uploading to:", cloudinaryUrl);
+
+    const cloudinaryResponse = await fetch(cloudinaryUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    console.log("Cloudinary status:", cloudinaryResponse.status);
 
     const result = await cloudinaryResponse.json();
+    console.log("Cloudinary response:", JSON.stringify(result).substring(0, 200));
 
     if (!cloudinaryResponse.ok) {
-      console.error("Cloudinary error:", result);
+      console.error("Cloudinary upload failed:", result);
       return new Response(
-        JSON.stringify({ error: "Cloudinary upload failed", details: result }),
+        JSON.stringify({ 
+          error: "Cloudinary upload failed", 
+          details: result
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // -------------------------------
-    // SUCCESS RESPONSE
-    // -------------------------------
+    console.log("Upload successful!");
     return new Response(
       JSON.stringify({
         url: result.secure_url,
@@ -140,10 +88,18 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+    
   } catch (err) {
-    console.error("Upload function error:", err);
+    console.error("=== Error caught ===");
+    console.error("Error:", err);
+    console.error("Message:", err?.message);
+    console.error("Stack:", err?.stack);
+    
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ 
+        error: "Internal server error",
+        message: err?.message || "Unknown error"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -36,7 +36,7 @@ export function Footer() {
               <span className="text-sm">{BRAND.email}</span>
             </a>
 
-            <a
+            {/* <a
               href={`${WHATSAPP_BASE_URL}${BRAND.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -44,7 +44,7 @@ export function Footer() {
             >
               <MessageCircle className="h-5 w-5 group-hover:text-primary transition-colors" />
               <span className="text-sm">WhatsApp</span>
-            </a>
+            </a> */}
           </div>
         </div>
 
