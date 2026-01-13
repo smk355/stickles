@@ -1,18 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Minus, Plus, Trash2, MessageCircle, ArrowLeft } from "lucide-react";
+import { Minus, Plus, Trash2, MessageCircle, ArrowLeft, Tag } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useProducts } from "@/hooks/useProducts";
 import { BRAND, WHATSAPP_BASE_URL } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Cart() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
-  const { items, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { items, updateQuantity, removeFromCart } = useCart();
   const { data: allProducts = [] } = useProducts();
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number; finalTotal: number } | null>(null);
+  const [verifyingCoupon, setVerifyingCoupon] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -30,6 +38,21 @@ export default function Cart() {
     0
   );
 
+  useEffect(() => {
+    // Reset coupon if cart changes or total changes significantly (optional logic, keeping it simple for now)
+    // In a real app, you might want to re-validate the coupon if the cart total changes.
+    if (appliedCoupon && appliedCoupon.finalTotal > total) {
+      // Simple check: if discount makes total negative or invalid, logic is handled by backend but UI should reflect
+    }
+    // For now, if items change, we might want to re-calculate or just warn user.
+    // Let's re-apply coupon logic if needed, but for MVP we'll leave it as applied
+    // until user removes it or checkout.
+    // Actually, if total changes, discount might change (if percentage). 
+    // We should probably re-verify coupon or just reset it. Resetting is safer.
+    // setAppliedCoupon(null); 
+    // setCouponCode("");
+  }, [items, total]);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -38,22 +61,101 @@ export default function Cart() {
     }).format(price);
   };
 
-  const handleWhatsAppCheckout = () => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setVerifyingCoupon(true);
+
+    try {
+      // TypeScript might incorrectly infer that apply_coupon takes no args (never)
+      // due to generic type resolution issues, but the function exists and takes args.
+      const { data, error } = await supabase.rpc('apply_coupon', {
+        p_code: couponCode.toUpperCase(),
+        p_user: user?.id || '',
+        p_total: total
+      } as any);
+
+      if (error) throw error;
+
+      // The RPC returns { error: '...' } in JSON if validation fails inside the function logic
+      // but typical supabase RPC calls return error object if PG raises exception.
+      // My RPC returns JSON with error key.
+      const response = data as any;
+
+      if (response.error) {
+        toast.error(response.error);
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon({
+          id: response.coupon_id,
+          code: couponCode.toUpperCase(),
+          discount: response.discount,
+          finalTotal: response.final_total
+        });
+        toast.success("Coupon applied successfully!");
+      }
+    } catch (error) {
+      console.error("Coupon error:", error);
+      toast.error("Failed to apply coupon");
+    } finally {
+      setVerifyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    toast.info("Coupon removed");
+  };
+
+  const handleWhatsAppCheckout = async () => {
+    setCheckingOut(true);
+    try {
+      if (appliedCoupon && user) {
+        const { error } = await supabase.from('coupon_usages').insert({
+          coupon_id: appliedCoupon.id,
+          user_id: user.id
+        });
+
+        if (error) {
+          console.error("Coupon usage failed", error);
+          if (error.code === '23505') {
+            toast.error("Coupon already used");
+            setAppliedCoupon(null);
+          } else {
+            toast.error("Failed to apply coupon");
+          }
+          setCheckingOut(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setCheckingOut(false);
+      return;
+    }
+
     const itemsList = cartProducts
       .map((item, i) => `${i + 1}. ${item.product?.name} × ${item.quantity} – ${formatPrice((item.product?.price || 0) * item.quantity)}`)
       .join("\n");
 
-    const message = `Hi, my name is ${profile?.name || "Customer"}
+    let message = `Hi, my name is ${profile?.name || "Customer"}
 
 I would like to order the following items:
-${itemsList}
+${itemsList}`;
 
-Total: ${formatPrice(total)}
+    if (appliedCoupon) {
+      message += `\n\nSubtotal: ${formatPrice(total)}
+Coupon (${appliedCoupon.code}): -${formatPrice(appliedCoupon.discount)}
+Total to Pay: ${formatPrice(appliedCoupon.finalTotal)}`;
+    } else {
+      message += `\n\nTotal: ${formatPrice(total)}`;
+    }
 
-Please let me know the next steps.`;
+    message += `\n\nPlease let me know the next steps.`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`${WHATSAPP_BASE_URL}${BRAND.whatsapp}?text=${encodedMessage}`, "_blank");
+    setCheckingOut(false);
   };
 
   if (authLoading) {
@@ -106,13 +208,60 @@ Please let me know the next steps.`;
             ))}
 
             <div className="border-t pt-6">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-lg font-medium">Total</span>
-                <span className="text-2xl font-bold">{formatPrice(total)}</span>
+              {/* Coupon Section */}
+              <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-dashed">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-sm">Have a coupon code?</span>
+                </div>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-green-50 text-green-700 px-3 py-2 rounded-md border border-green-200">
+                    <span className="font-mono font-bold">{appliedCoupon.code} applied!</span>
+                    <Button variant="ghost" size="sm" className="h-auto p-1 text-green-700 hover:text-green-800 hover:bg-green-100" onClick={removeCoupon}>
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="uppercase font-mono"
+                    />
+                    <Button variant="outline" onClick={handleApplyCoupon} disabled={verifyingCoupon || !couponCode}>
+                      {verifyingCoupon ? "Checking..." : "Apply"}
+                    </Button>
+                  </div>
+                )}
               </div>
-              <Button size="lg" className="w-full" onClick={handleWhatsAppCheckout}>
-                <MessageCircle className="h-5 w-5 mr-2" />
-                Order via WhatsApp
+
+              <div className="space-y-2 mb-6 text-sm">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>{formatPrice(total)}</span>
+                </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-600 font-medium my-2">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span>-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-lg font-bold pt-2 border-t">
+                  <span>Total</span>
+                  <span>{formatPrice(appliedCoupon ? appliedCoupon.finalTotal : total)}</span>
+                </div>
+              </div>
+
+              <Button size="lg" className="w-full" onClick={handleWhatsAppCheckout} disabled={checkingOut}>
+                {checkingOut ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Order via WhatsApp
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -15,11 +15,11 @@ const Index = () => {
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-stickles-cream via-background to-stickles-cream-dark" />
-        
+
         {/* Floating Decorative Elements */}
         <div className="absolute top-20 left-[10%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-stickles-sage/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/3 right-[20%] w-48 h-48 bg-stickles-coral-light/15 rounded-full blur-2xl animate-pulse" style={{ animationDelay: "0.5s" }} />
+        <div className="absolute top-1/3 right-[20%] w-48 h-48 bg-stickles-purple-light/15 rounded-full blur-2xl animate-pulse" style={{ animationDelay: "0.5s" }} />
 
         {/* Main Content */}
         <div className="container relative z-10 px-4 text-center">
@@ -31,7 +31,7 @@ const Index = () => {
             </div>
 
             {/* Brand Name */}
-            <h1 
+            <h1
               className="font-heading text-6xl md:text-8xl lg:text-9xl font-bold text-foreground tracking-tight animate-fade-up"
               style={{ animationDelay: "100ms" }}
             >
@@ -39,7 +39,7 @@ const Index = () => {
             </h1>
 
             {/* Tagline */}
-            <p 
+            <p
               className="text-xl md:text-2xl lg:text-3xl text-muted-foreground italic max-w-lg mx-auto animate-fade-up"
               style={{ animationDelay: "200ms" }}
             >
@@ -47,7 +47,7 @@ const Index = () => {
             </p>
 
             {/* CTA Buttons */}
-            <div 
+            <div
               className="flex flex-col sm:flex-row gap-4 justify-center pt-6 animate-fade-up"
               style={{ animationDelay: "300ms" }}
             >
@@ -85,7 +85,7 @@ const Index = () => {
               Find the perfect accessory to express your unique style
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {(displayCategories.length > 0 ? displayCategories.map(c => c.name) : ["Phone Charms", "Bracelets", "Bangles", "Stickers"]).map((category, i) => (
               <Link
@@ -130,8 +130,8 @@ const Index = () => {
               { icon: "🚀", title: "Fast Delivery", desc: "Quick shipping across India" },
               { icon: "💬", title: "Easy Orders", desc: "Order directly via WhatsApp" },
             ].map((feature, i) => (
-              <div 
-                key={feature.title} 
+              <div
+                key={feature.title}
                 className="text-center p-6 rounded-2xl bg-card border border-border/50 animate-fade-up"
                 style={{ animationDelay: `${i * 100}ms` }}
               >

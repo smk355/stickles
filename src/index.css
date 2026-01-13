@@ -16,8 +16,8 @@
     --popover: 35 33% 98%;
     --popover-foreground: 20 14% 12%;
 
-    /* Terracotta coral - warm and inviting */
-    --primary: 15 70% 55%;
+    /* Terracotta coral - warm and inviting -> now Purple */
+    --primary: 270 70% 55%;
     --primary-foreground: 35 33% 98%;
 
     /* Soft cream secondary */
@@ -36,14 +36,14 @@
 
     --border: 35 20% 88%;
     --input: 35 20% 88%;
-    --ring: 15 70% 55%;
+    --ring: 270 70% 55%;
 
     --radius: 0.75rem;
 
     /* Custom Stickles tokens */
-    --stickles-coral: 15 70% 55%;
-    --stickles-coral-light: 15 70% 65%;
-    --stickles-coral-dark: 15 70% 45%;
+    --stickles-purple: 270 70% 55%;
+    --stickles-purple-light: 270 70% 65%;
+    --stickles-purple-dark: 270 70% 45%;
     --stickles-cream: 35 33% 98%;
     --stickles-cream-dark: 35 25% 92%;
     --stickles-charcoal: 20 14% 12%;
@@ -52,14 +52,14 @@
     --stickles-warm-gray: 20 10% 60%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(15 70% 55%) 0%, hsl(25 80% 65%) 50%, hsl(35 85% 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 80% 65%) 50%, hsl(290 85% 70%) 100%);
     --gradient-warm: linear-gradient(180deg, hsl(35 33% 98%) 0%, hsl(35 25% 92%) 100%);
-    --gradient-coral: linear-gradient(135deg, hsl(15 70% 55%) 0%, hsl(25 75% 60%) 100%);
+    --gradient-coral: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 75% 60%) 100%);
 
     /* Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(20 14% 12% / 0.08);
     --shadow-medium: 0 8px 30px -8px hsl(20 14% 12% / 0.12);
-    --shadow-glow: 0 0 40px hsl(15 70% 55% / 0.2);
+    --shadow-glow: 0 0 40px hsl(270 70% 55% / 0.2);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,12 +67,12 @@
 
     --sidebar-background: 35 30% 96%;
     --sidebar-foreground: 20 14% 12%;
-    --sidebar-primary: 15 70% 55%;
+    --sidebar-primary: 270 70% 55%;
     --sidebar-primary-foreground: 35 33% 98%;
     --sidebar-accent: 35 25% 92%;
     --sidebar-accent-foreground: 20 14% 12%;
     --sidebar-border: 35 20% 88%;
-    --sidebar-ring: 15 70% 55%;
+    --sidebar-ring: 270 70% 55%;
   }
 
   .dark {
@@ -85,7 +85,7 @@
     --popover: 20 14% 10%;
     --popover-foreground: 35 33% 95%;
 
-    --primary: 15 70% 60%;
+    --primary: 270 70% 60%;
     --primary-foreground: 20 14% 8%;
 
     --secondary: 20 12% 18%;
@@ -102,16 +102,16 @@
 
     --border: 20 12% 22%;
     --input: 20 12% 22%;
-    --ring: 15 70% 60%;
+    --ring: 270 70% 60%;
 
     --sidebar-background: 20 14% 10%;
     --sidebar-foreground: 35 33% 95%;
-    --sidebar-primary: 15 70% 60%;
+    --sidebar-primary: 270 70% 60%;
     --sidebar-primary-foreground: 20 14% 8%;
     --sidebar-accent: 20 12% 18%;
     --sidebar-accent-foreground: 35 33% 95%;
     --sidebar-border: 20 12% 22%;
-    --sidebar-ring: 15 70% 60%;
+    --sidebar-ring: 270 70% 60%;
   }
 }
 
@@ -124,7 +124,12 @@
     @apply bg-background text-foreground font-body antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading;
   }
 }
@@ -169,6 +174,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -179,6 +185,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -189,6 +196,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -200,6 +208,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);

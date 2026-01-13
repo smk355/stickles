@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, FolderTree } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, TicketPercent } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminCategories } from "@/components/admin/AdminCategories";
+import { AdminCoupons } from "@/components/admin/AdminCoupons";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -41,12 +42,12 @@ export default function Admin() {
             <h1 className="font-heading text-3xl font-bold">Admin Dashboard</h1>
           </div>
           <p className="text-muted-foreground">
-            Manage your products and categories
+            Manage your products, categories, and coupons
           </p>
         </div>
-        
+
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="products" className="gap-2">
               <Package className="h-4 w-4" />
               Products
@@ -54,6 +55,10 @@ export default function Admin() {
             <TabsTrigger value="categories" className="gap-2">
               <FolderTree className="h-4 w-4" />
               Categories
+            </TabsTrigger>
+            <TabsTrigger value="coupons" className="gap-2">
+              <TicketPercent className="h-4 w-4" />
+              Coupons
             </TabsTrigger>
           </TabsList>
 
@@ -63,6 +68,10 @@ export default function Admin() {
 
           <TabsContent value="categories" className="animate-fade-in">
             <AdminCategories />
+          </TabsContent>
+
+          <TabsContent value="coupons" className="animate-fade-in">
+            <AdminCoupons />
           </TabsContent>
         </Tabs>
       </div>

@@ -62,9 +62,9 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         stickles: {
-          coral: "hsl(var(--stickles-coral))",
-          "coral-light": "hsl(var(--stickles-coral-light))",
-          "coral-dark": "hsl(var(--stickles-coral-dark))",
+          purple: "hsl(var(--stickles-purple))",
+          "purple-light": "hsl(var(--stickles-purple-light))",
+          "purple-dark": "hsl(var(--stickles-purple-dark))",
           cream: "hsl(var(--stickles-cream))",
           "cream-dark": "hsl(var(--stickles-cream-dark))",
           charcoal: "hsl(var(--stickles-charcoal))",
