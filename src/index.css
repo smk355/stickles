@@ -17,7 +17,7 @@
     --popover-foreground: 20 14% 12%;
 
     /* Terracotta coral - warm and inviting -> now Purple */
-    --primary: 270 70% 55%;
+    --primary: 270 70% 65%;
     --primary-foreground: 35 33% 98%;
 
     /* Soft cream secondary */
@@ -36,12 +36,12 @@
 
     --border: 35 20% 88%;
     --input: 35 20% 88%;
-    --ring: 270 70% 55%;
+    --ring: 270 70% 65%;
 
     --radius: 0.75rem;
 
     /* Custom Stickles tokens */
-    --stickles-purple: 270 70% 55%;
+    --stickles-purple: 270 70% 65%;
     --stickles-purple-light: 270 70% 65%;
     --stickles-purple-dark: 270 70% 45%;
     --stickles-cream: 35 33% 98%;
@@ -52,14 +52,14 @@
     --stickles-warm-gray: 20 10% 60%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 80% 65%) 50%, hsl(290 85% 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(270 70% 65%) 0%, hsl(280 80% 65%) 50%, hsl(290 85% 70%) 100%);
     --gradient-warm: linear-gradient(180deg, hsl(35 33% 98%) 0%, hsl(35 25% 92%) 100%);
-    --gradient-coral: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 75% 60%) 100%);
+    --gradient-coral: linear-gradient(135deg, hsl(270 70% 65%) 0%, hsl(280 75% 60%) 100%);
 
     /* Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(20 14% 12% / 0.08);
     --shadow-medium: 0 8px 30px -8px hsl(20 14% 12% / 0.12);
-    --shadow-glow: 0 0 40px hsl(270 70% 55% / 0.2);
+    --shadow-glow: 0 0 40px hsl(270 70% 65% / 0.2);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,12 +67,12 @@
 
     --sidebar-background: 35 30% 96%;
     --sidebar-foreground: 20 14% 12%;
-    --sidebar-primary: 270 70% 55%;
+    --sidebar-primary: 270 70% 65%;
     --sidebar-primary-foreground: 35 33% 98%;
     --sidebar-accent: 35 25% 92%;
     --sidebar-accent-foreground: 20 14% 12%;
     --sidebar-border: 35 20% 88%;
-    --sidebar-ring: 270 70% 55%;
+    --sidebar-ring: 270 70% 65%;
   }
 
   .dark {
