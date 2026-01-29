@@ -86,12 +86,12 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
             {(displayCategories.length > 0 ? displayCategories.map(c => c.name) : ["Phone Charms", "Bracelets", "Bangles", "Stickers"]).map((category, i) => (
               <Link
                 key={category}
                 to={`/catalogue?category=${encodeURIComponent(category)}`}
-                className="group relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 hover-lift animate-fade-up"
+                className="group relative aspect-square w-[calc(50%-1rem)] md:w-[calc(25%-1.5rem)] min-w-[140px] max-w-[280px] rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 hover-lift animate-fade-up"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
