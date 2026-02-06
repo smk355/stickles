@@ -33,6 +33,8 @@ type Coupon = {
     starts_at: string | null;
     expires_at: string | null;
     is_active: boolean;
+    min_order_value: number;
+    is_visible: boolean;
 };
 
 export function AdminCoupons() {
@@ -49,6 +51,8 @@ export function AdminCoupons() {
     const [value, setValue] = useState("");
     const [maxUses, setMaxUses] = useState("");
     const [expiresAt, setExpiresAt] = useState("");
+    const [minOrderValue, setMinOrderValue] = useState("");
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         fetchCoupons();
@@ -62,7 +66,7 @@ export function AdminCoupons() {
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
-            setCoupons(data || []);
+            setCoupons((data as unknown as Coupon[]) || []);
         } catch (error) {
             console.error("Error fetching coupons:", error);
             toast.error("Failed to load coupons");
@@ -77,6 +81,8 @@ export function AdminCoupons() {
         setValue("");
         setMaxUses("");
         setExpiresAt("");
+        setMinOrderValue("0");
+        setIsVisible(false);
         setEditingCoupon(null);
     };
 
@@ -92,6 +98,8 @@ export function AdminCoupons() {
         setValue(String(coupon.discount_value));
         setMaxUses(coupon.max_uses ? String(coupon.max_uses) : "");
         setExpiresAt(coupon.expires_at ? coupon.expires_at.slice(0, 16) : ""); // Format for datetime-local
+        setMinOrderValue(String(coupon.min_order_value || 0));
+        setIsVisible(coupon.is_visible || false);
         setIsDialogOpen(true);
     };
 
@@ -125,6 +133,8 @@ export function AdminCoupons() {
                 discount_value: Number(value),
                 max_uses: maxUses ? Number(maxUses) : null,
                 expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+                min_order_value: Number(minOrderValue),
+                is_visible: isVisible,
             };
 
             if (editingCoupon) {
@@ -228,6 +238,8 @@ export function AdminCoupons() {
                                 </div>
                             </div>
 
+
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="maxUses">Max Uses (Optional)</Label>
@@ -248,6 +260,30 @@ export function AdminCoupons() {
                                         value={expiresAt}
                                         onChange={(e) => setExpiresAt(e.target.value)}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="minOrderValue">Min Order Value (₹)</Label>
+                                    <Input
+                                        id="minOrderValue"
+                                        type="number"
+                                        min="0"
+                                        placeholder="0"
+                                        value={minOrderValue}
+                                        onChange={(e) => setMinOrderValue(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-center space-x-2 pt-8">
+                                    <input
+                                        type="checkbox"
+                                        id="isVisible"
+                                        checked={isVisible}
+                                        onChange={(e) => setIsVisible(e.target.checked)}
+                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                    <Label htmlFor="isVisible" className="cursor-pointer">Show in Visible List</Label>
                                 </div>
                             </div>
 

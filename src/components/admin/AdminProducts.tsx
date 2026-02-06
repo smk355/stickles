@@ -60,33 +60,37 @@ export function AdminProducts() {
   const uploadToCloudinary = async (file: File): Promise<string | null> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-    
-    const folder = form.sub_category 
-      ? `${form.category}/${form.sub_category}` 
+    formData.append("file", file);
+
+    // 🔑 REQUIRED: unsigned preset
+    formData.append(
+      "upload_preset",
+      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    );
+
+    const folder = form.sub_category
+      ? `${form.category}/${form.sub_category}`
       : form.category || "uncategorized";
-    formData.append('folder', `products/${folder}`);
+
+    formData.append("folder", `products/${folder}`);
 
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
       {
-        method: 'POST',
+        method: "POST",
         body: formData,
       }
     );
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Cloudinary error:', error);
-      throw new Error(error.error?.message || 'Upload failed');
+      throw new Error(error.error?.message || "Upload failed");
     }
 
     const data = await response.json();
     return data.secure_url;
   } catch (error) {
-    console.error('Failed to upload image:', error);
-    toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("Failed to upload image:", error);
     return null;
   }
 };

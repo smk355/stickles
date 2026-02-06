@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminCategories } from "@/components/admin/AdminCategories";
 import { AdminCoupons } from "@/components/admin/AdminCoupons";
+import { AdminOrders } from "@/components/admin/AdminOrders";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-md grid-cols-4">
             <TabsTrigger value="products" className="gap-2">
               <Package className="h-4 w-4" />
               Products
@@ -59,6 +60,10 @@ export default function Admin() {
             <TabsTrigger value="coupons" className="gap-2">
               <TicketPercent className="h-4 w-4" />
               Coupons
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="gap-2">
+              <Package className="h-4 w-4" />
+              Orders
             </TabsTrigger>
           </TabsList>
 
@@ -72,6 +77,10 @@ export default function Admin() {
 
           <TabsContent value="coupons" className="animate-fade-in">
             <AdminCoupons />
+          </TabsContent>
+
+          <TabsContent value="orders" className="animate-fade-in">
+            <AdminOrders />
           </TabsContent>
         </Tabs>
       </div>

@@ -14,13 +14,29 @@ import { toast } from "sonner";
 export default function Cart() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
-  const { items, updateQuantity, removeFromCart } = useCart();
+  const { items, updateQuantity, removeFromCart, clearCart } = useCart();
   const { data: allProducts = [] } = useProducts();
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number; finalTotal: number } | null>(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [visibleCoupons, setVisibleCoupons] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchVisibleCoupons = async () => {
+      const { data } = await supabase
+        .from('coupons')
+        .select('code, discount_type, discount_value, min_order_value')
+        .eq('is_visible', true)
+        .eq('is_active', true);
+
+      if (data) {
+        setVisibleCoupons(data);
+      }
+    };
+    fetchVisibleCoupons();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -128,6 +144,38 @@ export default function Cart() {
           return;
         }
       }
+
+      // Create Order in Database
+      if (user) {
+        const orderItems = cartProducts.map(item => ({
+          product_id: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          image: item.product.images?.[0]
+        }));
+
+        const { error: orderError } = await (supabase as any).from('orders').insert({
+          user_id: user.id,
+          items: orderItems,
+          total_amount: total,
+          discount_amount: appliedCoupon ? appliedCoupon.discount : 0,
+          final_amount: appliedCoupon ? appliedCoupon.finalTotal : total,
+          status: 'pending'
+        });
+
+        if (orderError) {
+          console.error("Order creation failed", orderError);
+          toast.error("Failed to create order record, but proceeding to WhatsApp");
+          // optional: return; but requirement says optimistic, so maybe warn but proceed?
+          // Actually, if DB fails, maybe we shouldn't clear cart.
+        } else {
+          // Clear cart only on success (or maybe we keep it until whatsapp message is sent? 
+          // Standard flow usually clears it. Let's clear it.)
+          clearCart();
+        }
+      }
+
     } catch (e) {
       console.error(e);
       setCheckingOut(false);
@@ -174,7 +222,10 @@ Total to Pay: ${formatPrice(appliedCoupon.finalTotal)}`;
         {cartProducts.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-4">Your cart is empty</p>
-            <Button asChild><Link to="/catalogue">Browse Products</Link></Button>
+            <div className="flex justify-center gap-4">
+              <Button asChild><Link to="/catalogue">Browse Products</Link></Button>
+              <Button variant="outline" asChild><Link to="/orders">View My Orders</Link></Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -232,6 +283,36 @@ Total to Pay: ${formatPrice(appliedCoupon.finalTotal)}`;
                     <Button variant="outline" onClick={handleApplyCoupon} disabled={verifyingCoupon || !couponCode}>
                       {verifyingCoupon ? "Checking..." : "Apply"}
                     </Button>
+                  </div>
+                )}
+
+                {/* Available Coupons List */}
+                {visibleCoupons.length > 0 && !appliedCoupon && (
+                  <div className="mt-4 pt-4 border-t border-dashed">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Available Coupons</p>
+                    <div className="space-y-2">
+                      {visibleCoupons.map((coupon) => (
+                        <div
+                          key={coupon.code}
+                          className="flex justify-between items-center text-sm p-2 bg-secondary/50 rounded cursor-pointer hover:bg-secondary transition-colors"
+                          onClick={() => setCouponCode(coupon.code)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-mono font-semibold text-gray-700">{coupon.code}</span>
+                            <span className="text-xs text-gray-500">
+                              {coupon.discount_type === 'percent' ? `${coupon.discount_value}% OFF` : `₹${coupon.discount_value} OFF`}
+                              {coupon.min_order_value > 0 && ` • Min Order: ₹${coupon.min_order_value}`}
+                            </span>
+                          </div>
+                          <Button variant="link" size="sm" className="h-auto p-0 text-primary" onClick={(e) => {
+                            e.stopPropagation();
+                            setCouponCode(coupon.code);
+                          }}>
+                            Use
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

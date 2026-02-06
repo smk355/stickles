@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, User, Menu, X, Settings, LogOut } from "lucide-react";
+import { ShoppingBag, User, Menu, X, Settings, LogOut, Package } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,8 +23,8 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="font-heading text-2xl font-bold tracking-tight text-foreground hover:text-primary transition-colors"
           >
             {BRAND.name}
@@ -32,16 +32,16 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/catalogue" 
+            <Link
+              to="/catalogue"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Shop
             </Link>
-            
+
             {isAdmin && (
-              <Link 
-                to="/admin" 
+              <Link
+                to="/admin"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
               >
                 <Settings className="h-4 w-4" />
@@ -85,6 +85,10 @@ export function Header() {
                     <ShoppingBag className="h-4 w-4 mr-2" />
                     My Cart
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/orders")}>
+                    <Package className="h-4 w-4 mr-2" />
+                    My Orders
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin")}>
                       <Settings className="h-4 w-4 mr-2" />
@@ -125,17 +129,17 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-in">
             <nav className="flex flex-col gap-3">
-              <Link 
-                to="/catalogue" 
+              <Link
+                to="/catalogue"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Shop
               </Link>
-              
+
               {isAdmin && (
-                <Link 
-                  to="/admin" 
+                <Link
+                  to="/admin"
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -162,7 +166,7 @@ export function Header() {
                     Sign Out
                   </Button>
                 </>
-               ) : (
+              ) : (
                 <>
                   {/*
                   <Button
@@ -178,7 +182,7 @@ export function Header() {
                   </Button>
                   */}
                 </>
-                )
+              )
               }
             </nav>
           </div>
