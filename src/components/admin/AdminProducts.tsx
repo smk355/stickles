@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Upload, X, Loader2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Upload, X, Loader2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,17 +8,109 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useAllProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, Product } from "@/hooks/useProducts";
+import { useAllProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useUpdateProductsOrder, Product } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ImageUpload {
   id: string;
   file?: File;
   url: string;
   uploading: boolean;
+}
+
+interface SortableProductItemProps {
+  product: Product;
+  formatPrice: (price: number) => string;
+  handleToggleActive: (product: Product) => void;
+  handleEdit: (product: Product) => void;
+  handleDelete: (id: string) => void;
+}
+
+function SortableProductItem({ product, formatPrice, handleToggleActive, handleEdit, handleDelete }: SortableProductItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    position: isDragging ? ("relative" as const) : ("static" as const),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-4 p-4 bg-card rounded-xl border transition-shadow ${
+        isDragging ? "shadow-lg border-primary" : "hover:shadow-soft"
+      }`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab hover:text-primary active:cursor-grabbing text-muted-foreground p-1"
+        title="Drag to reorder"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+      <img
+        src={product.images?.[0] || "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=80&h=80&fit=crop"}
+        alt={product.name}
+        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+      />
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium truncate">{product.name}</h3>
+        <p className="text-sm text-muted-foreground">
+          {product.category}
+          {product.sub_category && ` / ${product.sub_category}`}
+        </p>
+        <p className="font-semibold text-primary">{formatPrice(product.price)}</p>
+      </div>
+      <Badge variant={product.is_active ? "default" : "secondary"} className="flex-shrink-0">
+        {product.is_active ? "Active" : "Hidden"}
+      </Badge>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleToggleActive(product)}
+          title={product.is_active ? "Hide product" : "Show product"}
+        >
+          {product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive"
+          onClick={() => handleDelete(product.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function AdminProducts() {
@@ -28,6 +120,7 @@ export function AdminProducts() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
+  const updateProductsOrder = useUpdateProductsOrder();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -35,7 +128,19 @@ export function AdminProducts() {
   const [images, setImages] = useState<ImageUpload[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [orderedProducts, setOrderedProducts] = useState<Product[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  useEffect(() => {
+    setOrderedProducts(products);
+  }, [products]);
 
   const resetForm = () => {
     setForm({ name: "", description: "", price: "", category: "", sub_category: "", is_active: true });
@@ -205,6 +310,35 @@ export function AdminProducts() {
       toast.success(product.is_active ? "Product hidden" : "Product visible");
     } catch {
       toast.error("Failed to update product");
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = orderedProducts.findIndex((p) => p.id === active.id);
+      const newIndex = orderedProducts.findIndex((p) => p.id === over.id);
+
+      const newOrder = arrayMove(orderedProducts, oldIndex, newIndex);
+      setOrderedProducts(newOrder);
+
+      const updates = newOrder
+        .map((p, i) => ({ id: p.id, display_order: i }))
+        .filter(
+          (update, i) =>
+            orderedProducts[i].id !== update.id || orderedProducts[i].display_order !== update.display_order
+        );
+
+      if (updates.length > 0) {
+        try {
+          await updateProductsOrder.mutateAsync(updates);
+          toast.success("Products reordered successfully");
+        } catch {
+          toast.error("Failed to reorder products");
+          setOrderedProducts(products); // Revert on failure
+        }
+      }
     }
   };
 
@@ -399,7 +533,7 @@ export function AdminProducts() {
             <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
           ))}
         </div>
-      ) : products.length === 0 ? (
+      ) : orderedProducts.length === 0 ? (
         <div className="text-center py-12 bg-card rounded-lg border border-dashed">
           <p className="text-muted-foreground mb-4">No products yet</p>
           <Button onClick={() => setDialogOpen(true)} variant="outline">
@@ -408,43 +542,22 @@ export function AdminProducts() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {products.map((product) => (
-            <div key={product.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border hover:shadow-soft transition-shadow">
-              <img 
-                src={product.images?.[0] || "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=80&h=80&fit=crop"} 
-                alt={product.name} 
-                className="w-16 h-16 rounded-lg object-cover flex-shrink-0" 
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium truncate">{product.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {product.category}{product.sub_category && ` / ${product.sub_category}`}
-                </p>
-                <p className="font-semibold text-primary">{formatPrice(product.price)}</p>
-              </div>
-              <Badge variant={product.is_active ? "default" : "secondary"} className="flex-shrink-0">
-                {product.is_active ? "Active" : "Hidden"}
-              </Badge>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => handleToggleActive(product)}
-                  title={product.is_active ? "Hide product" : "Show product"}
-                >
-                  {product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(product.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={orderedProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+            <div className="grid gap-4">
+              {orderedProducts.map((product) => (
+                <SortableProductItem
+                  key={product.id}
+                  product={product}
+                  formatPrice={formatPrice}
+                  handleToggleActive={handleToggleActive}
+                  handleEdit={handleEdit}
+                  handleDelete={handleDelete}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

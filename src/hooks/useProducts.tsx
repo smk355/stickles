@@ -10,6 +10,7 @@ export interface Product {
   sub_category: string | null;
   images: string[];
   is_active: boolean;
+  display_order?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +30,7 @@ export function useProducts(filters?: ProductFilters) {
         .from("products")
         .select("*")
         .eq("is_active", true)
+        .order("display_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (filters?.category) {
@@ -62,6 +64,7 @@ export function useAllProducts() {
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .order("display_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -141,6 +144,34 @@ export function useDeleteProduct() {
         .eq("id", id);
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useUpdateProductsOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updates: { id: string; display_order: number }[]) => {
+      // Upsert requires all non-nullable columns or we can use a loop of updates.
+      // Better to loop updates since we only want to change display_order.
+      const promises = updates.map((update) => 
+        supabase
+          .from("products")
+          .update({ display_order: update.display_order })
+          .eq("id", update.id)
+      );
+      
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r.error).map(r => r.error);
+      
+      if (errors.length > 0) {
+        throw new Error("Failed to update some product orders");
+      }
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
